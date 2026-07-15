@@ -1,0 +1,81 @@
+# MCP → ToolSpec (src/tools/mcp_adapter.py)
+#
+# Transports: stdio | streamable_http | fake
+# Agent names: mcp_<server_id>_<tool_name>
+# Allowlist: exact | mcp_<id>_* | mcp:<id>
+# lazy: true + tools_manifest → register without starting the process
+
+servers:
+  - id: anysearch
+    enabled: true
+    transport: streamable_http
+    url: "https://api.anysearch.com/mcp"
+    headers: {}
+    auth:
+      type: bearer
+      token_file: setting/API-key/AnySearch-API.txt
+    timeout_sec: 60
+    evidence_kind: mcp
+    requires_body: false
+    tool_allowlist: []
+
+  - id: matlab
+    # Set enabled: true locally after placing binary under mcp/ and filling paths
+    enabled: false
+    transport: stdio
+    keep_alive: true
+    lazy: true
+    command: "mcp/matlab-mcp-core-server-win64.exe"
+    args:
+      - "--matlab-display-mode=nodesktop"
+      - "--initialize-matlab-on-startup=false"
+      - "--matlab-root=C:/path/to/MATLAB/R20XXa"
+      - "--initial-working-folder=."
+    env: {}
+    timeout_sec: 180
+    evidence_kind: mcp
+    tool_allowlist: []
+    tools_manifest:
+      - name: detect_matlab_toolboxes
+        description: Returns installed MATLAB / toolbox version info
+        input_schema: { type: object }
+      - name: check_matlab_code
+        description: Static analysis on a MATLAB script path
+        input_schema:
+          type: object
+          properties:
+            script_path: { type: string }
+      - name: evaluate_matlab_code
+        description: Evaluate MATLAB code string in a session
+        input_schema:
+          type: object
+          properties:
+            code: { type: string }
+            project_path: { type: string }
+      - name: run_matlab_file
+        description: Execute a MATLAB .m script file
+        input_schema:
+          type: object
+          properties:
+            script_path: { type: string }
+      - name: run_matlab_test_file
+        description: Run MATLAB unit-test script
+        input_schema:
+          type: object
+          properties:
+            script_path: { type: string }
+
+  - id: demo
+    enabled: false
+    transport: fake
+    evidence_kind: mcp
+    fake_tools:
+      - name: ping
+        description: health check
+        input_schema: { type: object }
+    fake_responses:
+      ping:
+        content: [{ type: text, text: pong }]
+
+registry:
+  fail_on_load_error: false

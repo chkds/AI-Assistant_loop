@@ -1,0 +1,22 @@
+# Model tier routing placeholders (Phase 2 will wire real model_ids)
+defaults:
+  knowledge_mode: retrieve
+  token_budget: 32000
+  safe_context_ratio: 0.35
+
+complexity_to_tier:
+  simple: lite
+  standard: standard
+  hard: heavy
+
+modality_overrides:
+  # Image tasks need multimodal chat — pause until a VLM model id is provided
+  image: vlm
+
+# When true, agent code must raise and ask user instead of silently falling back
+pause_on_unconfigured_vlm: true
+
+retrieval:
+  top_k: 3
+  expand_parent: true
+  max_inject_tokens: 5000

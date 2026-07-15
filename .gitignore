@@ -1,0 +1,45 @@
+# Secrets & personal keys
+setting/
+.env
+.env.*
+*.pem
+*.key
+
+# Local development process / personal notes (not for public backup)
+Development/
+.cursor/
+
+# Personal / large local corpora & binaries
+raw/
+mcp/
+data/
+tests/
+
+# Optional local skill / embedding caches
+embedding/
+skills/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Runtime / logs
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local Qdrant persistence (if mounted)
+qdrant_storage/

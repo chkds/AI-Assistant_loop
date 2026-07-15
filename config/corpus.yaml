@@ -1,0 +1,9 @@
+# Default corpus readiness (phase ③) — expected embedded docs for bootstrap / health
+default_embed_docs:
+  - Bufort
+
+# Optional expansion targets (not required for ready_for_bootstrap)
+optional_docs: []
+
+# Eval set for multi-doc readiness later
+eval_config: config/eval_retrieve.yaml

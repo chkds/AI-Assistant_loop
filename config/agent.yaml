@@ -1,0 +1,29 @@
+# Agent loop budgets and cycle limits
+max_steps: 12
+compress_every_n_steps: 4
+compress_token_ratio: 0.70
+default_tier: lite
+model: deepseek-v4-flash
+
+# Stable checkpoint nodes (act is not a safe resume point)
+stable_nodes:
+  - classify
+  - orchestrate
+  - gate
+  - plan
+  - observe
+  - reflect
+  - compress
+  - done
+
+interrupt:
+  cooperative: true
+  kill_tools_on_stop: true
+
+reflect:
+  reject_title_only_evidence: true
+  require_body_chars: 200
+
+amend:
+  use_llm_classify: true
+  fallback_type: enrichment

@@ -1,0 +1,24 @@
+# Fixed retrieval evaluation queries (N4 / phase ③)
+# Default embedded set: config/corpus.yaml → default_embed_docs (Bufort).
+# Expand expects after more docs: scripts/ingest_all.py --embed
+# Run: python scripts/eval_retrieve.py
+
+queries:
+  - id: gnn_propagation
+    query: "radio propagation GNN"
+    expect_doc_substrings:
+      - "Bufort"
+  - id: data_driven_propagation
+    query: "data-driven radio propagation modeling graph neural"
+    expect_doc_substrings:
+      - "graph"
+  - id: wireless_channel_gnn
+    query: "wireless channel graph neural network"
+    expect_doc_substrings:
+      - "Bufort"
+  # Placeholder for multi-doc readiness — enable after second paper embedded
+  # - id: second_paper_slot
+  #   query: "…"
+  #   expect_doc_substrings: ["…"]
+
+top_k: 5

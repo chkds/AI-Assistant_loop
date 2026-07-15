@@ -1,0 +1,10 @@
+# Paths relative to project root
+raw_pdf2md: raw/pdf2md
+chunks_dir: data/chunks
+sessions_dir: data/sessions
+artifacts_dir: data/artifacts
+qdrant:
+  mode: local
+  path: data/qdrant_local
+  url: http://localhost:6333
+  collection: research_papers

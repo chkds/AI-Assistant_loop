@@ -1,0 +1,72 @@
+# Embedding: DashScope Qwen (API first; local switch reserved)
+embedding:
+  backend: api  # api | local
+  api_key_file: setting/API-key/qwen-API-key.txt
+  max_retries: 3
+  retry_backoff_sec: 1.5
+
+  text:
+    provider: dashscope
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: text-embedding-v4
+    fallback_model: text-embedding-v3
+    dimensions: 1024
+    batch_size: 10
+
+  vision:
+    provider: dashscope
+    endpoint: https://dashscope.aliyuncs.com/api/v1/services/embeddings/multimodal-embedding/multimodal-embedding
+    model: tongyi-embedding-vision-plus-2026-03-06
+    fallback_model: tongyi-embedding-vision-flash-2026-03-06
+    dimensions: 1152
+    mode: fused
+
+  local:
+    text:
+      model_name: null
+      model_path: null
+      device: cuda
+    vision:
+      model_name: null
+      model_path: null
+      device: cuda
+
+# Reasoning / chat: ComiRouter OpenAI-compatible relay (preferred)
+# Test default: deepseek-v4-flash (cost control). Escalate only when needed.
+# api_key_file = path storing the secret STRING (read contents → Authorization Bearer).
+# NEVER pass the filename itself as the token.
+# ComiRouter requires: Authorization: Bearer <TOKEN>
+# Do NOT use official OpenAI Python SDK here — Stainless User-Agent is WAF-blocked (403).
+# Client: src/llm/client.py uses httpx with Bearer + minimal headers.
+llm:
+  backend: api  # api | local
+  provider: comirouter
+  base_url: https://comirouter.com/v1
+  api_key_file: setting/API-key/comirouter-sales-API-key.txt
+  default_model: deepseek-v4-flash
+  max_retries: 3
+  retry_backoff_sec: 1.5
+  timeout_sec: 120
+  # Pause & ask user before wiring if a task needs models not available here
+  # (e.g. multimodal chat/VLM, or deeper reasoning than flash can support).
+  pause_policy:
+    multimodal_chat: require_user_model  # deepseek text models are not multimodal
+    heavy_reasoning_fail: escalate_or_ask
+
+  local:
+    model_name: null
+    model_path: null
+    device: cuda
+
+# Tier → model_id (all flash for cost during early tests; change later without code edits)
+llm_tiers:
+  lite:
+    model_id: deepseek-v4-flash
+  standard:
+    model_id: deepseek-v4-flash
+  heavy:
+    model_id: deepseek-v4-flash
+  # Not callable until a multimodal chat model is confirmed on ComiRouter / other key
+  vlm:
+    model_id: null
+    status: paused_needs_multimodal_chat

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Assistant Loop — HITL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #0f1419;
+      --bg1: #1a222c;
+      --bg2: #243040;
+      --line: #3a4a5c;
+      --text: #e8eef4;
+      --muted: #9aabbc;
+      --accent: #3d9a8b;
+      --warn: #c9853d;
+      --danger: #c45c5c;
+      --ok: #6faf6f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "IBM Plex Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1e3a36 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #2a3344 0%, transparent 50%),
+        var(--bg0);
+    }
+    header {
+      padding: 1.1rem 1.5rem 0.85rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(15, 20, 25, 0.88);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    header h1 { margin: 0; font-size: 1.3rem; font-weight: 600; }
+    header p { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.88rem; }
+    .health { font-size: 0.82rem; color: var(--muted); }
+    main {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) 300px;
+      min-height: calc(100vh - 92px);
+    }
+    @media (max-width: 1020px) { main { grid-template-columns: 1fr; } }
+    aside, section { border-right: 1px solid var(--line); padding: 1rem; }
+    aside:last-of-type { border-right: none; }
+    h2 {
+      margin: 0 0 0.65rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 62vh; overflow: auto; }
+    .item {
+      text-align: left; border: 1px solid var(--line); background: var(--bg1);
+      color: var(--text); border-radius: 6px; padding: 0.5rem 0.65rem; cursor: pointer; font: inherit;
+    }
+    .item:hover, .item.active { border-color: var(--accent); background: var(--bg2); }
+    .item small { display: block; color: var(--muted); margin-top: 0.2rem; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin: 0.55rem 0 0.25rem; }
+    textarea, input, select {
+      width: 100%; background: var(--bg1); border: 1px solid var(--line); color: var(--text);
+      border-radius: 6px; padding: 0.5rem 0.65rem; font: inherit;
+    }
+    textarea { min-height: 72px; resize: vertical; font-family: "IBM Plex Mono", monospace; font-size: 0.84rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.65rem; }
+    button {
+      border: 1px solid var(--line); background: var(--bg2); color: var(--text);
+      border-radius: 6px; padding: 0.42rem 0.75rem; cursor: pointer; font: inherit;
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #06120f; font-weight: 600; }
+    button.warn { border-color: var(--warn); color: var(--warn); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .badge {
+      display: inline-block; padding: 0.08rem 0.4rem; border-radius: 999px;
+      border: 1px solid var(--line); font-size: 0.72rem; color: var(--muted);
+    }
+    .badge.ok { color: var(--ok); border-color: var(--ok); }
+    .badge.run { color: var(--warn); border-color: var(--warn); }
+    .err { color: var(--danger); font-size: 0.85rem; margin-top: 0.45rem; }
+    .panel {
+      border: 1px solid var(--line); background: rgba(26, 34, 44, 0.85);
+      border-radius: 8px; padding: 0.75rem 0.85rem; margin-bottom: 0.75rem;
+    }
+    .panel h3 { margin: 0 0 0.45rem; font-size: 0.95rem; font-weight: 600; }
+    .answer { white-space: pre-wrap; line-height: 1.45; font-size: 0.92rem; }
+    .wi {
+      border-left: 3px solid var(--line); padding: 0.35rem 0.55rem; margin: 0.35rem 0;
+      background: var(--bg1); border-radius: 0 6px 6px 0;
+    }
+    .wi.current { border-left-color: var(--accent); }
+    .wi .t { font-weight: 500; }
+    .wi small { color: var(--muted); display: block; margin-top: 0.15rem; }
+    .ev {
+      border: 1px solid var(--line); border-radius: 6px; padding: 0.45rem 0.55rem;
+      margin: 0.35rem 0; background: var(--bg1); font-size: 0.84rem;
+    }
+    .ev a { color: var(--accent); }
+    details.debug { margin-top: 0.75rem; }
+    details.debug summary { cursor: pointer; color: var(--muted); font-size: 0.82rem; }
+    pre {
+      background: var(--bg1); border: 1px solid var(--line); border-radius: 6px;
+      padding: 0.65rem; overflow: auto; max-height: 36vh;
+      font-family: "IBM Plex Mono", monospace; font-size: 0.76rem; white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>AI Assistant Loop</h1>
+      <p>Classify → Orchestrate → … · async run · human-readable answers</p>
+    </div>
+    <div class="health" id="healthLine">Checking health…</div>
+  </header>
+  <main>
+    <aside>
+      <h2>Sessions</h2>
+      <div class="row">
+        <button type="button" id="btnRefresh">Refresh</button>
+        <button type="button" id="btnBootstrap">Bootstrap</button>
+      </div>
+      <div class="list" id="sessionList" style="margin-top:0.75rem"></div>
+    </aside>
+    <section>
+      <h2>Run</h2>
+      <label for="query">Query</label>
+      <textarea id="query" placeholder="Ask the agent…"></textarea>
+      <label for="taskType">task_type (optional)</label>
+      <select id="taskType"><option value="">(auto / orchestrator)</option></select>
+      <div class="row">
+        <button type="button" class="primary" id="btnRun">Run (async)</button>
+        <button type="button" class="warn" id="btnInterrupt">Interrupt</button>
+        <button type="button" id="btnResume">Resume</button>
+      </div>
+      <label for="amend">Amend / inject</label>
+      <textarea id="amend" placeholder="Correction… (optional target work_item id below)"></textarea>
+      <label for="amendTarget">target_work_item_id</label>
+      <input id="amendTarget" placeholder="current item if empty" />
+      <div class="row">
+        <button type="button" id="btnAmend">Amend</button>
+        <button type="button" id="btnConfirm">Confirm files</button>
+      </div>
+      <p class="err" id="err"></p>
+
+      <div class="panel" id="answerPanel">
+        <h3>Answer</h3>
+        <div class="answer" id="answerBody"><span style="color:var(--muted)">No session yet.</span></div>
+      </div>
+      <div class="panel">
+        <h3>Work items</h3>
+        <div id="workItems"><span style="color:var(--muted)">—</span></div>
+      </div>
+      <div class="panel">
+        <h3>Evidence</h3>
+        <div id="evidenceCards"><span style="color:var(--muted)">—</span></div>
+      </div>
+      <details class="debug">
+        <summary>Debug JSON (trajectory)</summary>
+        <pre id="traj">{}</pre>
+      </details>
+    </section>
+    <aside>
+      <h2>Events</h2>
+      <div class="row">
+        <button type="button" id="btnEvents">Poll</button>
+        <button type="button" id="btnSSE">SSE live</button>
+      </div>
+      <pre id="events" style="margin-top:0.75rem; max-height:75vh">[]</pre>
+    </aside>
+  </main>
+  <script>
+    const api = (path, opts = {}) =>
+      fetch(path, {
+        headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+        ...opts,
+      }).then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : (data.message || r.statusText || String(r.status)));
+        return data;
+      });
+
+    let sessionId = null;
+    let eventOffset = 0;
+    let pollTimer = null;
+    let es = null;
+
+    const $ = (id) => document.getElementById(id);
+    const err = (msg) => { $("err").textContent = msg || ""; };
+
+    function statusBadge(status) {
+      const cls = status === "done" ? "ok" : (status === "running" ? "run" : "");
+      return `<span class="badge ${cls}">${status || "?"}</span>`;
+    }
+
+    function escapeHtml(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function loadHealth() {
+      try {
+        const h = await api("/health");
+        const corp = h.corpus || {};
+        const q = h.qdrant || {};
+        $("healthLine").innerHTML =
+          `${statusBadge(h.ready_for_bootstrap ? "ready" : "wait")} ` +
+          `qdrant=${q.ok ? "ok" : "fail"} · corpus=${corp.ok ? "ok" : "empty"}` +
+          (corp.point_count != null ? ` · pts=${corp.point_count}` : "") +
+          (corp.hint ? `<br/><span style="color:var(--warn)">${escapeHtml(corp.hint)}</span>` : "");
+      } catch (e) {
+        $("healthLine").textContent = "health error: " + e.message;
+      }
+    }
+
+    async function loadCatalog() {
+      const cat = await api("/agent/catalog");
+      const sel = $("taskType");
+      for (const t of cat.tasks || []) {
+        const opt = document.createElement("option");
+        opt.value = t.task_type;
+        opt.textContent = t.task_type;
+        sel.appendChild(opt);
+      }
+    }
+
+    async function refreshSessions() {
+      const data = await api("/agent/sessions");
+      const box = $("sessionList");
+      box.innerHTML = "";
+      for (const s of data.sessions || []) {
+        const btn = document.createElement("button");
+        btn.className = "item" + (s.session_id === sessionId ? " active" : "");
+        btn.type = "button";
+        btn.innerHTML = `<strong>${s.session_id}</strong> ${statusBadge(s.status)}
+          <small>${escapeHtml((s.query || "").slice(0, 80))}</small>`;
+        btn.onclick = () => selectSession(s.session_id);
+        box.appendChild(btn);
+      }
+    }
+
+    function renderHuman(t) {
+      const parts = [];
+      if (t.final_answer) parts.push(escapeHtml(t.final_answer));
+      const answers = t.item_answers || {};
+      const keys = Object.keys(answers);
+      if (keys.length) {
+        for (const id of keys) {
+          const wi = (t.work_items || []).find((x) => x.id === id);
+          const title = wi ? wi.title : id;
+          parts.push(`<div style="margin-top:0.75rem"><strong>${escapeHtml(title)}</strong>\n${escapeHtml(answers[id])}</div>`);
+        }
+      }
+      $("answerBody").innerHTML = parts.length ? parts.join("\n\n") : `<span style="color:var(--muted)">${statusBadge(t.status)} waiting…</span>`;
+
+      const wis = t.work_items || [];
+      if (!wis.length) {
+        $("workItems").innerHTML = `<span style="color:var(--muted)">No work_items yet</span>`;
+      } else {
+        $("workItems").innerHTML = wis.map((w) => {
+          const cur = w.id === t.current_work_item_id ? " current" : "";
+          return `<div class="wi${cur}"><div class="t">${escapeHtml(w.title || w.id)} ${statusBadge(w.status)}</div>
+            <small>${escapeHtml(w.task_type || "")} · expect=${escapeHtml(w.expect || "")}${w.depends_on && w.depends_on.length ? " · deps=" + w.depends_on.length : ""}</small>
+            <small>${escapeHtml((w.goal || "").slice(0, 180))}</small></div>`;
+        }).join("");
+      }
+
+      const ev = t.evidence || [];
+      if (!ev.length) {
+        $("evidenceCards").innerHTML = `<span style="color:var(--muted)">No evidence</span>`;
+      } else {
+        $("evidenceCards").innerHTML = ev.slice(0, 24).map((e) => {
+          const link = e.url ? `<a href="${escapeHtml(e.url)}" target="_blank" rel="noopener">source</a>` : "";
+          return `<div class="ev"><strong>${escapeHtml(e.source_type || "?")}</strong>
+            ${e.has_body ? '<span class="badge ok">body</span>' : '<span class="badge">snippet</span>'}
+            ${e.stale ? '<span class="badge">stale</span>' : ""} ${link}
+            <div style="color:var(--muted);margin-top:0.25rem">${escapeHtml(e.text_preview || "")}</div></div>`;
+        }).join("");
+      }
+
+      $("traj").textContent = JSON.stringify(t, null, 2);
+    }
+
+    function stopPoll() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    function startPollWhileRunning() {
+      stopPoll();
+      pollTimer = setInterval(async () => {
+        if (!sessionId) return;
+        try {
+          const t = await api(`/agent/sessions/${sessionId}/trajectory`);
+          renderHuman(t);
+          await pollEvents(false);
+          if (t.status !== "running" && !t.job_running) stopPoll();
+        } catch (e) { /* keep trying */ }
+      }, 1200);
+    }
+
+    async function selectSession(id) {
+      sessionId = id;
+      eventOffset = 0;
+      err("");
+      if (es) { es.close(); es = null; }
+      await refreshSessions();
+      await loadTrajectory();
+      await pollEvents(true);
+      startPollWhileRunning();
+    }
+
+    async function loadTrajectory() {
+      if (!sessionId) return;
+      const t = await api(`/agent/sessions/${sessionId}/trajectory`);
+      renderHuman(t);
+    }
+
+    async function pollEvents(reset) {
+      if (!sessionId) return;
+      if (reset) eventOffset = 0;
+      const data = await api(`/agent/sessions/${sessionId}/events?offset=${eventOffset}&limit=100`);
+      eventOffset = data.next_offset;
+      const el = $("events");
+      const prev = reset ? [] : JSON.parse(el.textContent || "[]");
+      el.textContent = JSON.stringify([...prev, ...(data.events || [])].slice(-100), null, 2);
+    }
+
+    $("btnRefresh").onclick = () => refreshSessions().catch((e) => err(e.message));
+    $("btnEvents").onclick = () => pollEvents(false).catch((e) => err(e.message));
+    $("btnSSE").onclick = () => {
+      if (!sessionId) { err("select a session"); return; }
+      if (es) { es.close(); es = null; }
+      es = new EventSource(`/agent/sessions/${sessionId}/events/stream?offset=${eventOffset}`);
+      const buf = [];
+      es.onmessage = (msg) => {
+        try {
+          const ev = JSON.parse(msg.data);
+          buf.push(ev);
+          $("events").textContent = JSON.stringify(buf.slice(-100), null, 2);
+          if (ev.type === "stream_end") { es.close(); es = null; loadTrajectory(); }
+        } catch (_) {}
+      };
+      es.onerror = () => { err("SSE error / closed"); };
+    };
+
+    $("btnRun").onclick = async () => {
+      try {
+        err("");
+        const body = { query: $("query").value.trim(), sync: false };
+        if (!body.query) throw new Error("query required");
+        const tt = $("taskType").value;
+        if (tt) body.task_type = tt;
+        const out = await api("/agent/run", { method: "POST", body: JSON.stringify(body) });
+        await selectSession(out.session_id);
+      } catch (e) { err(e.message); }
+    };
+
+    $("btnBootstrap").onclick = async () => {
+      try {
+        err("");
+        const out = await api("/agent/bootstrap", { method: "POST" });
+        if (!out.ok) throw new Error(out.message || "bootstrap failed");
+        await loadHealth();
+        await selectSession(out.session_id);
+      } catch (e) { err(e.message); }
+    };
+
+    $("btnInterrupt").onclick = async () => {
+      try {
+        if (!sessionId) throw new Error("select a session");
+        await api(`/agent/sessions/${sessionId}/interrupt`, { method: "POST", body: "{}" });
+        await loadTrajectory();
+      } catch (e) { err(e.message); }
+    };
+
+    $("btnResume").onclick = async () => {
+      try {
+        if (!sessionId) throw new Error("select a session");
+        await api(`/agent/sessions/${sessionId}/resume`, { method: "POST", body: JSON.stringify({ sync: false }) });
+        startPollWhileRunning();
+        await loadTrajectory();
+        await pollEvents(false);
+      } catch (e) { err(e.message); }
+    };
+
+    $("btnAmend").onclick = async () => {
+      try {
+        if (!sessionId) throw new Error("select a session");
+        const text = $("amend").value.trim();
+        if (!text) throw new Error("amend text required");
+        const body = { text };
+        const tid = $("amendTarget").value.trim();
+        if (tid) body.target_work_item_id = tid;
+        await api(`/agent/sessions/${sessionId}/amend`, { method: "POST", body: JSON.stringify(body) });
+        await loadTrajectory();
+      } catch (e) { err(e.message); }
+    };
+
+    $("btnConfirm").onclick = async () => {
+      try {
+        if (!sessionId) throw new Error("select a session");
+        await api(`/agent/sessions/${sessionId}/confirm-files`, { method: "POST", body: JSON.stringify({}) });
+        await loadTrajectory();
+      } catch (e) { err(e.message); }
+    };
+
+    loadHealth();
+    loadCatalog().then(refreshSessions).catch((e) => err(e.message));
+  </script>
+</body>
+</html>

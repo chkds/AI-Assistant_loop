@@ -1,0 +1,27 @@
+# Session persistence, file watch, confirm gate
+sessions_dir: data/sessions
+artifacts_subdir: artifacts
+
+file_watch:
+  # Relative to session dir or project root
+  include_session_artifacts: true
+  include_paths:
+    - config
+  # Always watch these under project root when present in session pins
+  pin_extensions:
+    - .md
+    - .py
+    - .yaml
+    - .yml
+    - .txt
+    - .json
+
+confirm:
+  required_on_diff: true
+  config_change_resume_node: classify
+  artifact_change_resume_node: plan
+  source_md_change_resume_node: gate
+
+snapshot:
+  hash_algo: sha256
+  max_file_bytes: 5000000

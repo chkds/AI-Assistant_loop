@@ -1,0 +1,47 @@
+# Enabled tools and task packs (Phase 2.5 plugin surface)
+# Add a tool: implement handler + ToolSpec (or module:get_tool_spec), enable here, add unit test.
+# Do not hardcode new tools inside agent/graph.py.
+
+tools:
+  - name: kb_retrieve
+    enabled: true
+    module: scripts.Tools.kb_retrieve
+    factory: get_tool_spec
+  - name: tavily_search
+    enabled: true
+    module: scripts.Tools.tavily_search
+    factory: get_tool_spec
+  - name: fetch_page
+    enabled: true
+    module: scripts.Tools.fetch_page
+    factory: get_tool_spec
+  - name: run_local_script
+    enabled: true
+    module: scripts.Tools.run_local_script
+    factory: get_tool_spec
+
+tasks:
+  - name: research_qa
+    enabled: true
+    module: src.tasks.packs.research_qa
+    factory: get_task_spec
+  - name: web_research
+    enabled: true
+    module: src.tasks.packs.web_research
+    factory: get_task_spec
+  - name: matlab_assist
+    enabled: true
+    module: src.tasks.packs.matlab_assist
+    factory: get_task_spec
+  - name: finance_qa
+    enabled: true
+    module: src.tasks.packs.finance_qa
+    factory: get_task_spec
+  - name: general_qa
+    enabled: true
+    module: src.tasks.packs.general_qa
+    factory: get_task_spec
+
+registry:
+  fail_on_load_error: false
+  max_tool_calls_per_task: 20

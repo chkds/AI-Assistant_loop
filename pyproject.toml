@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-assistant-loop"
+version = "0.1.0"
+description = "Cyclic AI assistant with gated RAG over MinerU paper corpus"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "qdrant-client>=1.12.0",
+  "httpx>=0.27.0",
+  "openai>=1.55.0",
+  "pyyaml>=6.0.2",
+  "pydantic>=2.9.0",
+  "pydantic-settings>=2.6.0",
+  "tiktoken>=0.8.0",
+  "langgraph>=0.2.0",
+  "langchain-core>=0.3.0",
+  "trafilatura>=1.12.0",
+  "mcp>=1.27.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "ruff>=0.8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[project.scripts]
+ingest-one = "scripts.ingest_one:main"
+ingest-all = "scripts.ingest_all:main"
+smoke-retrieve = "scripts.smoke_retrieve:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "scripts*"]
+
+[tool.setuptools.package-dir]
+"" = "."

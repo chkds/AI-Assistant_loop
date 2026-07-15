@@ -1,0 +1,23 @@
+domain: research
+
+parent:
+  target_tokens: 3000
+  max_tokens: 4000
+
+child:
+  min_tokens: 400
+  max_tokens: 800
+  overlap_ratio: 0.12
+
+merge:
+  similarity_threshold: 0.82
+  use_embedding_merge: false
+
+figure:
+  nearby_blocks: 2
+  include_image_path: true
+
+atomic_types:
+  - table
+  - equation
+  - image
